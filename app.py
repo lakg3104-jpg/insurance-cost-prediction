@@ -201,6 +201,15 @@ div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {font-weig
 .tip .icon {font-size: 1.5rem; line-height: 1.2;}
 .tip .t {font-weight: 700; color: var(--ink); margin-bottom: 2px;}
 .tip .d {color: var(--muted); line-height: 1.5; font-size: 0.97rem;}
+.group-title {font-weight: 700; color: var(--muted); font-size: 0.92rem; margin: 16px 0 0 0;}
+.tip .amt {margin-left: auto; font-weight: 700; white-space: nowrap; padding-left: 12px;}
+.up {color: var(--coral);}
+.ok {color: var(--green);}
+.reason {
+    margin-top: 18px; padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 1.05rem; line-height: 1.55; color: #e6f2f1;
+}
 .note {color: var(--muted); font-size: 0.85rem; margin-top: 6px;}
 
 @media (max-width: 640px) {
@@ -265,9 +274,9 @@ model, columns, q50, q75, all_costs = train_model()
 st.markdown(
     """
 <div class="hero">
-    <div class="badge">🏥 Healthcare cost estimator</div>
+    <div class="badge">🏥 Healthcare cost prediction</div>
     <h1>Medical Insurance Cost Prediction</h1>
-    <p>Enter a few patient details and get an estimated yearly insurance cost, based on a model trained on real insurance records.</p>
+    <p>Enter a few personal details to get a predicted yearly health insurance cost, along with a clear breakdown of what drives it.</p>
 </div>
 """,
     unsafe_allow_html=True,
@@ -346,38 +355,51 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
     cost = estimate()
     monthly = cost / 12
 
-    if cost < q50:
-        level, tier_idx = "Low cost", 0
-    elif cost < q75:
-        level, tier_idx = "Medium cost", 1
-    else:
-        level, tier_idx = "High cost", 2
+    # What raises the cost: compare with the same person without that factor
+    raises = []
+    keeps_low = []
 
-    # Plain-language comparison with everyone in the data
-    pct = int(round((all_costs < cost).mean() * 100))
-    if pct >= 50:
-        meaning = f"Your estimate is higher than about <b>{pct} out of 100</b> people in our data."
+    if smoker == "yes":
+        raises.append(("🚭", "Smoking",
+                       "Smokers pay far more than non-smokers. This is usually the biggest factor.",
+                       cost - estimate(smoker="no")))
     else:
-        meaning = f"Your estimate is lower than about <b>{100 - pct} out of 100</b> people in our data."
+        keeps_low.append(("🚭", "You do not smoke", "This keeps your cost much lower."))
 
-    tier_colors = ["#2f9e6f", "#e9a23b", "#e4572e"]
-    tier_names = ["Low", "Medium", "High"]
-    scale_html = "".join(
-        f'<div class="on" style="background:{tier_colors[i]};">{tier_names[i]}</div>'
-        if i == tier_idx
-        else f"<div>{tier_names[i]}</div>"
-        for i in range(3)
-    )
+    if bmi >= 25:
+        raises.append(("⚖️", "BMI above the normal range",
+                       f"Your BMI is {bmi:.1f}. A BMI under 25 is considered normal.",
+                       cost - estimate(bmi=24.9)))
+    else:
+        keeps_low.append(("⚖️", "Your BMI is in a healthy range", "No extra cost for weight."))
+
+    if age > 18:
+        raises.append(("📅", "Age",
+                       f"Costs rise as people get older. At {age}, this adds to the cost compared with an 18-year-old.",
+                       cost - estimate(age=18)))
+
+    if children > 0:
+        raises.append(("👨‍👩‍👧", "Dependents",
+                       f"You have {children} dependent(s). Each one adds a small amount.",
+                       cost - estimate(children=0)))
+    else:
+        keeps_low.append(("👨‍👩‍👧", "No dependents", "No extra cost for family members."))
+
+    raises = [r for r in raises if r[3] > 0]
+    raises.sort(key=lambda r: r[3], reverse=True)
+
+    if raises:
+        reason_line = f"The biggest reason for this amount: <b>{raises[0][1].lower()}</b>."
+    else:
+        reason_line = "Nothing in your details is pushing the cost up."
 
     st.markdown(
         flat(f"""
 <div class="result">
-    <div class="kicker">Your estimated yearly insurance cost</div>
+    <div class="kicker">Predicted yearly health insurance cost</div>
     <div class="amount">${cost:,.0f}</div>
     <div class="sub">That is about ${monthly:,.0f} per month</div>
-    <span class="tier" style="background:{tier_colors[tier_idx]};">{level} compared with most people</span>
-    <div class="scale">{scale_html}</div>
-    <div class="meaning">{meaning}</div>
+    <div class="reason">{reason_line}</div>
 </div>
 """),
         unsafe_allow_html=True,
@@ -385,45 +407,23 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-    # Personalised "what affects your cost" tips, based on what-if estimates
-    tips = []
-    if smoker == "yes":
-        saving = cost - estimate(smoker="no")
-        if saving > 0:
-            tips.append(("🚭", "Smoking raises your cost the most",
-                         f"If you did not smoke, your estimate would be about ${saving:,.0f} lower each year."))
-    if bmi >= 25:
-        saving = cost - estimate(bmi=24.9)
-        if saving > 0:
-            tips.append(("⚖️", "Your BMI is above the normal range",
-                         f"A BMI in the normal range (under 25) would lower your estimate by about ${saving:,.0f} each year."))
-    if smoker == "no" and bmi < 25:
-        tips.append(("✅", "Your habits are helping",
-                     "Not smoking and having a BMI in the normal range both keep your estimate lower."))
-    if age + 10 <= 64:
-        extra = estimate(age=age + 10) - cost
-        if extra > 0:
-            tips.append(("📅", "Costs go up with age",
-                         f"In 10 years, the same profile would cost about ${extra:,.0f} more each year."))
-    else:
-        tips.append(("📅", "Costs go up with age",
-                     "Insurance costs usually rise as people get older."))
-    if children > 0:
-        extra = cost - estimate(children=children - 1)
-        if extra > 0:
-            tips.append(("👨‍👩‍👧", "Dependents add to the cost",
-                         f"Each dependent adds about ${extra:,.0f} to your yearly estimate."))
-
-    tips_html = "".join(
-        f'<div class="tip"><div class="icon">{icon}</div><div><div class="t">{title}</div><div class="d">{text}</div></div></div>'
-        for icon, title, text in tips
+    raises_html = "".join(
+        f'<div class="tip"><div class="icon">{i}</div><div><div class="t">{t}</div><div class="d">{d}</div></div>'
+        f'<div class="amt up">+${a:,.0f} / year</div></div>'
+        for i, t, d, a in raises
     )
+    low_html = "".join(
+        f'<div class="tip"><div class="icon">{i}</div><div><div class="t">{t}</div><div class="d">{d}</div></div>'
+        f'<div class="amt ok">✓</div></div>'
+        for i, t, d in keeps_low
+    )
+
     with st.container(border=True, key="card_tips"):
         st.markdown(
             flat(f"""
-<div class="tips-title">What affects your cost</div>
-{tips_html}
-<div class="note">This is an estimate based on past insurance data, not an official quote. Real prices depend on the insurer and the plan.</div>
+<div class="tips-title">Why this amount?</div>
+{'<div class="group-title">What makes it higher</div>' + raises_html if raises_html else ''}
+{'<div class="group-title">What keeps it lower</div>' + low_html if low_html else ''}
 """),
             unsafe_allow_html=True,
         )
@@ -433,6 +433,6 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
 
 # --------------------------------------------------------------------- Footer
 st.markdown(
-    '<div class="footer">Medical Insurance Cost Prediction • Built with Python and Streamlit</div>',
+    '<div class="footer">Medical Insurance Cost Prediction • Built with Python, scikit-learn and Streamlit</div>',
     unsafe_allow_html=True,
 )
