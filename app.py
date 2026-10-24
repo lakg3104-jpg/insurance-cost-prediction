@@ -5,47 +5,44 @@ import streamlit as st
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
-# Page Configuration
+# Page Configuration with exact project name and medical/particle emojis
 st.set_page_config(
-    page_title="MediCare Cost Intelligence Hub", 
-    page_icon="🩺", 
+    page_title="Medical Insurance Cost Prediction", 
+    page_icon="🧬", 
     layout="centered",
     initial_sidebar_state="expanded"
 )
 
-# Custom Medical Theme Styling (Clean Teal & Healthcare Blue)
+# Attractive Custom CSS with vibrant gradient and particle-like styling
 st.markdown("""
     <style>
     .main {
-        background-color: #f4fbfb;
+        background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
     }
     .stButton>button {
-        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         color: white;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 16px;
-        border-radius: 10px;
-        padding: 0.7rem 1rem;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
         border: none;
-        box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background: linear-gradient(135deg, #0f766e 100%, #115e59 100%);
-        box-shadow: 0 6px 15px rgba(13, 148, 136, 0.4);
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
     }
     h1 {
-        color: #134e4a;
+        color: #1e1b4b;
         font-weight: 800;
         letter-spacing: -0.5px;
     }
     h3 {
-        color: #0f766e;
+        color: #312e81;
         font-size: 1.2rem !important;
         font-weight: 600;
-    }
-    .stAlert {
-        border-radius: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -65,12 +62,13 @@ def train_model():
 
 def bmi_category(b):
     if b < 18.5:
-        return "Underweight (Need Nutrition Guidance) 🔵"
-    if b < 25:
+        return "Underweight 🔵"
+    elif 18.5 <= b < 25:
         return "Normal & Healthy 🟢"
-    if b < 30:
+    elif 25 <= b < 30:
         return "Overweight 🟠"
-    return "Obese (High Risk Tier) 🔴"
+    else:
+        return "Obese 🔴"
 
 if not DATA_FILE.exists():
     st.error("insurance_cleaned.csv not found in the root directory.")
@@ -79,30 +77,31 @@ if not DATA_FILE.exists():
 model, columns, q50, q75 = train_model()
 
 # ---------------- Header Section ----------------
-st.title("🩺 MediCare Cost Intelligence Portal")
-st.markdown("Welcome to the advanced clinical insurance analytics platform. Enter patient parameters below to generate real-time policy cost projections.")
+st.title("🧬 Medical Insurance Cost Prediction ✨")
+st.markdown("💊 *Enter the customer details below to get an accurate estimation of yearly insurance expenses using Machine Learning.* 🩺")
 st.divider()
 
-# Input Form Layout in Clean Cards/Columns
+# Input Layout
 col1, col2 = st.columns(2, gap="large")
 
 with col1:
-    st.markdown("### 👤 Patient Clinical Profile")
-    age = st.slider("Patient Age", min_value=18, max_value=64, value=30)
-    bmi = st.slider("Body Mass Index (BMI)", min_value=15.0, max_value=55.0, value=25.0, step=0.1)
-    children = st.slider("Dependent Children", min_value=0, max_value=5, value=0)
+    st.markdown("### 👤 Patient Details")
+    age = st.slider("Age", min_value=18, max_value=64, value=30)
+    # Default BMI set to 22.0 (Normal) so it doesn't show overweight by default
+    bmi = st.slider("BMI", min_value=15.0, max_value=55.0, value=22.0, step=0.1)
+    children = st.slider("Number of Children", min_value=0, max_value=5, value=0)
 
 with col2:
-    st.markdown("### 📋 Risk & Demographic Factors")
-    sex = st.radio("Biological Gender", ["female", "male"], horizontal=True)
-    smoker = st.radio("Tobacco Smoking Status", ["no", "yes"], horizontal=True)
-    region = st.selectbox("Geographic Zone", ["northeast", "northwest", "southeast", "southwest"])
+    st.markdown("### 📋 Lifestyle & Region")
+    sex = st.radio("Gender", ["female", "male"], horizontal=True)
+    smoker = st.radio("Smoker", ["no", "yes"], horizontal=True)
+    region = st.selectbox("Region", ["northeast", "northwest", "southeast", "southwest"])
 
-st.info(f"**Evaluated BMI Status:** {bmi_category(bmi)}")
+st.info(f"✨ **BMI Status:** {bmi_category(bmi)}")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Prediction Action Button
-if st.button("Generate Insurance Cost Estimation", type="primary", use_container_width=True):
+# Prediction Action
+if st.button("🚀 Predict Insurance Cost", type="primary", use_container_width=True):
     input_data = pd.DataFrame([{
         "age": age,
         "sex": 1 if sex == "male" else 0,
@@ -117,30 +116,30 @@ if st.button("Generate Insurance Cost Estimation", type="primary", use_container
     cost = max(model.predict(input_data)[0], 0)
 
     if cost < q50:
-        level = "Standard Tier (Low Risk)"
+        level = "Low Cost Tier 🟢"
     elif cost < q75:
-        level = "Moderate Tier (Standard Risk)"
+        level = "Medium Cost Tier 🟡"
     else:
-        level = "Premium Tier (High Risk)"
+        level = "High Cost Tier 🔴"
 
     st.divider()
-    st.subheader("📊 Analytical Prediction Results")
+    st.subheader("🎯 Prediction Result")
     
     res_col1, res_col2 = st.columns(2)
     with res_col1:
-        st.metric(label="Estimated Annual Premium", value=f"${cost:,.2f}")
+        st.metric(label="Estimated Cost (USD)", value=f"${cost:,.2f}")
     with res_col2:
-        st.metric(label="Calculated Risk Band", value=level)
+        st.metric(label="Cost Category", value=level)
 
     if cost < q50:
-        st.success(f"The projected annual insurance expenditure is **${cost:,.2f}** (Optimized Tier).")
+        st.success(f"Estimated Insurance Cost: **${cost:,.2f}** (Budget Friendly Tier)")
     elif cost < q75:
-        st.warning(f"The projected annual insurance expenditure is **${cost:,.2f}** (Moderate Risk Tier).")
+        st.warning(f"Estimated Insurance Cost: **${cost:,.2f}** (Moderate Tier)")
     else:
-        st.error(f"The projected annual insurance expenditure is **${cost:,.2f}** (High Risk Premium Tier).")
+        st.error(f"Estimated Insurance Cost: **${cost:,.2f}** (High Risk Tier)")
 
-    with st.expander("🔍 Inspect Raw Model Vector Input"):
+    with st.expander("🔍 View Raw Model Input"):
         st.dataframe(input_data, hide_index=True)
 
 st.divider()
-st.caption("MediCare Analytics Engine • Powered by Multiple Linear Regression & Streamlit")
+st.caption("✨ Medical Insurance Cost Prediction App • Built with Streamlit & Machine Learning 🚀")
