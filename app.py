@@ -180,31 +180,32 @@ div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {font-weig
     color: #ffffff;
 }
 
-/* Gauge */
-.gauge {position: relative; height: 12px; border-radius: 999px; margin: 28px 0 8px 0;
-        background: linear-gradient(90deg, var(--green) 0%, var(--amber) 55%, var(--coral) 100%);}
-.gauge .pin {
-    position: absolute; top: -6px; width: 24px; height: 24px; border-radius: 50%;
-    background: #ffffff; border: 4px solid var(--ink); transform: translateX(-50%);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+.sub {color: #9cc9cc; font-size: 1.02rem; margin-bottom: 14px;}
+.meaning {
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 1.05rem; line-height: 1.55; color: #e6f2f1;
 }
-.gauge-scale {display: flex; justify-content: space-between; color: #9cc9cc; font-size: 0.82rem;}
+.scale {display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px;}
+.scale div {
+    text-align: center; padding: 10px 4px; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 600;
+    background: rgba(255, 255, 255, 0.08); color: #9cc9cc;
+}
+.scale div.on {color: #ffffff;}
 
-/* Small stat tiles */
-.stats {display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px;}
-.stat {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 14px;
-    padding: 14px 16px;
-}
-.stat .s-label {color: #9cc9cc; font-size: 0.8rem;}
-.stat .s-value {font-weight: 700; font-size: 1.15rem; margin-top: 2px;}
+/* Tips */
+.tips-title {font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.2rem; margin: 4px 0 4px 0;}
+.tip {display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line);}
+.tip:last-of-type {border-bottom: none;}
+.tip .icon {font-size: 1.5rem; line-height: 1.2;}
+.tip .t {font-weight: 700; color: var(--ink); margin-bottom: 2px;}
+.tip .d {color: var(--muted); line-height: 1.5; font-size: 0.97rem;}
+.note {color: var(--muted); font-size: 0.85rem; margin-top: 6px;}
 
 @media (max-width: 640px) {
     .hero h1 {font-size: 2rem;}
     .result .amount {font-size: 2.4rem;}
-    .stats {grid-template-columns: 1fr;}
 }
 @media (prefers-reduced-motion: reduce) {
     .stButton > button {transition: none;}
@@ -229,7 +230,7 @@ def train_model():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     model = LinearRegression()
     model.fit(X_train, y_train)
-    return model, X.columns, y.quantile(0.50), y.quantile(0.75), y.mean(), y.max()
+    return model, X.columns, y.quantile(0.50), y.quantile(0.75), y.values
 
 
 def bmi_category(b):
@@ -258,7 +259,7 @@ if not DATA_FILE.exists():
     st.error("insurance_cleaned.csv not found in the root directory.")
     st.stop()
 
-model, columns, q50, q75, avg_cost, max_cost = train_model()
+model, columns, q50, q75, all_costs = train_model()
 
 # ----------------------------------------------------------------------- Hero
 st.markdown(
@@ -317,8 +318,8 @@ st.markdown(
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ Prediction
-if st.button("📊 Calculate Insurance Cost", type="primary"):
-    input_data = pd.DataFrame(
+def build_input(age, sex, bmi, children, smoker, region):
+    return pd.DataFrame(
         [
             {
                 "age": age,
@@ -333,42 +334,101 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
         ]
     )[columns]
 
-    cost = max(model.predict(input_data)[0], 0)
+
+def estimate(**changes):
+    values = dict(age=age, sex=sex, bmi=bmi, children=children, smoker=smoker, region=region)
+    values.update(changes)
+    return max(model.predict(build_input(**values))[0], 0)
+
+
+if st.button("📊 Calculate Insurance Cost", type="primary"):
+    input_data = build_input(age, sex, bmi, children, smoker, region)
+    cost = estimate()
+    monthly = cost / 12
 
     if cost < q50:
-        level, tier_color, bracket = "Low cost tier", "#2f9e6f", "Low risk bracket"
+        level, tier_idx = "Low cost", 0
     elif cost < q75:
-        level, tier_color, bracket = "Medium cost tier", "#e9a23b", "Moderate risk bracket"
+        level, tier_idx = "Medium cost", 1
     else:
-        level, tier_color, bracket = "High cost tier", "#e4572e", "High risk bracket"
+        level, tier_idx = "High cost", 2
 
-    # Gauge position (0-100%) against the dataset's cost range
-    pin_pos = min(max(cost / max_cost, 0), 1) * 100
-    diff = cost - avg_cost
-    diff_txt = f"{'+' if diff >= 0 else '-'}${abs(diff):,.0f}"
+    # Plain-language comparison with everyone in the data
+    pct = int(round((all_costs < cost).mean() * 100))
+    if pct >= 50:
+        meaning = f"Your estimate is higher than about <b>{pct} out of 100</b> people in our data."
+    else:
+        meaning = f"Your estimate is lower than about <b>{100 - pct} out of 100</b> people in our data."
+
+    tier_colors = ["#2f9e6f", "#e9a23b", "#e4572e"]
+    tier_names = ["Low", "Medium", "High"]
+    scale_html = "".join(
+        f'<div class="on" style="background:{tier_colors[i]};">{tier_names[i]}</div>'
+        if i == tier_idx
+        else f"<div>{tier_names[i]}</div>"
+        for i in range(3)
+    )
 
     st.markdown(
         flat(f"""
 <div class="result">
-    <div class="kicker">Estimated annual cost (USD)</div>
-    <div class="amount">${cost:,.2f}</div>
-    <span class="tier" style="background:{tier_color};">{level}</span>
-
-    <div class="gauge"><div class="pin" style="left:{pin_pos:.1f}%;"></div></div>
-    <div class="gauge-scale"><span>$0</span><span>${max_cost:,.0f}</span></div>
-
-    <div class="stats">
-        <div class="stat"><div class="s-label">Risk bracket</div><div class="s-value">{bracket}</div></div>
-        <div class="stat"><div class="s-label">Average in dataset</div><div class="s-value">${avg_cost:,.0f}</div></div>
-        <div class="stat"><div class="s-label">Compared with average</div><div class="s-value">{diff_txt}</div></div>
-    </div>
+    <div class="kicker">Your estimated yearly insurance cost</div>
+    <div class="amount">${cost:,.0f}</div>
+    <div class="sub">That is about ${monthly:,.0f} per month</div>
+    <span class="tier" style="background:{tier_colors[tier_idx]};">{level} compared with most people</span>
+    <div class="scale">{scale_html}</div>
+    <div class="meaning">{meaning}</div>
 </div>
 """),
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    with st.expander("🔍 View raw model feature vector"):
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+    # Personalised "what affects your cost" tips, based on what-if estimates
+    tips = []
+    if smoker == "yes":
+        saving = cost - estimate(smoker="no")
+        if saving > 0:
+            tips.append(("🚭", "Smoking raises your cost the most",
+                         f"If you did not smoke, your estimate would be about ${saving:,.0f} lower each year."))
+    if bmi >= 25:
+        saving = cost - estimate(bmi=24.9)
+        if saving > 0:
+            tips.append(("⚖️", "Your BMI is above the normal range",
+                         f"A BMI in the normal range (under 25) would lower your estimate by about ${saving:,.0f} each year."))
+    if smoker == "no" and bmi < 25:
+        tips.append(("✅", "Your habits are helping",
+                     "Not smoking and having a BMI in the normal range both keep your estimate lower."))
+    if age + 10 <= 64:
+        extra = estimate(age=age + 10) - cost
+        if extra > 0:
+            tips.append(("📅", "Costs go up with age",
+                         f"In 10 years, the same profile would cost about ${extra:,.0f} more each year."))
+    else:
+        tips.append(("📅", "Costs go up with age",
+                     "Insurance costs usually rise as people get older."))
+    if children > 0:
+        extra = cost - estimate(children=children - 1)
+        if extra > 0:
+            tips.append(("👨‍👩‍👧", "Dependents add to the cost",
+                         f"Each dependent adds about ${extra:,.0f} to your yearly estimate."))
+
+    tips_html = "".join(
+        f'<div class="tip"><div class="icon">{icon}</div><div><div class="t">{title}</div><div class="d">{text}</div></div></div>'
+        for icon, title, text in tips
+    )
+    with st.container(border=True, key="card_tips"):
+        st.markdown(
+            flat(f"""
+<div class="tips-title">What affects your cost</div>
+{tips_html}
+<div class="note">This is an estimate based on past insurance data, not an official quote. Real prices depend on the insurer and the plan.</div>
+"""),
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("🔍 View technical details (for advanced users)"):
         st.dataframe(input_data, hide_index=True)
 
 # --------------------------------------------------------------------- Footer
