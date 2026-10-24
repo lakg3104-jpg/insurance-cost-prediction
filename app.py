@@ -13,26 +13,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional Corporate Medical CSS Theme (Clean Navy & Slate Blue)
+# Professional "Wow-Factor" CSS with Card Borders, Shadows, and Sleek Typography
 st.markdown("""
     <style>
     .main {
-        background-color: #f8fafc;
+        background-color: #f1f5f9;
     }
+    /* Sleek Card Container with Borders */
+    .css-card {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        margin-bottom: 20px;
+    }
+    /* Professional Button Styling */
     .stButton>button {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: white;
         font-weight: 600;
-        font-size: 15px;
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
+        font-size: 16px;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
         border: none;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
         transition: all 0.3s ease;
+        width: 100%;
     }
     .stButton>button:hover {
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35);
     }
     h1 {
         color: #0f172a;
@@ -40,9 +51,12 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
     h3 {
-        color: #334155;
-        font-size: 1.15rem !important;
+        color: #1e293b;
+        font-size: 1.2rem !important;
         font-weight: 600;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -77,30 +91,30 @@ if not DATA_FILE.exists():
 model, columns, q50, q75 = train_model()
 
 # ---------------- Header Section ----------------
-st.title("Medical Insurance Cost Prediction")
-st.markdown("A machine learning analytics platform designed to estimate annual healthcare insurance expenses based on patient demographic and clinical metrics.")
+st.title("🏥 Medical Insurance Cost Prediction")
+st.markdown("💡 *An advanced machine learning analytics platform designed to estimate healthcare expenditure securely and accurately.*")
 st.divider()
 
-# Input Layout
+# Input Form in a Professional Card Layout
 col1, col2 = st.columns(2, gap="large")
 
 with col1:
-    st.markdown("### Patient Demographics")
+    st.markdown("### 👤 Patient Demographics")
     age = st.slider("Age", min_value=18, max_value=64, value=30)
     bmi = st.slider("BMI (Body Mass Index)", min_value=15.0, max_value=55.0, value=22.0, step=0.1)
     children = st.slider("Number of Dependents", min_value=0, max_value=5, value=0)
 
 with col2:
-    st.markdown("### Lifestyle & Region")
+    st.markdown("### 📋 Lifestyle & Region")
     sex = st.radio("Gender", ["female", "male"], horizontal=True)
     smoker = st.radio("Smoking Status", ["no", "yes"], horizontal=True)
     region = st.selectbox("Residential Region", ["northeast", "northwest", "southeast", "southwest"])
 
-st.info(f"**Calculated BMI Status:** {bmi_category(bmi)}")
+st.info(f"🛡️ **Calculated BMI Status:** {bmi_category(bmi)}")
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Prediction Action
-if st.button("Predict Insurance Cost", type="primary", use_container_width=True):
+if st.button("📊 Calculate Insurance Cost", type="primary"):
     input_data = pd.DataFrame([{
         "age": age,
         "sex": 1 if sex == "male" else 0,
@@ -122,7 +136,7 @@ if st.button("Predict Insurance Cost", type="primary", use_container_width=True)
         level = "High Cost Tier"
 
     st.divider()
-    st.subheader("Prediction Analysis")
+    st.subheader("📈 Prediction Analysis Report")
     
     res_col1, res_col2 = st.columns(2)
     with res_col1:
@@ -137,8 +151,8 @@ if st.button("Predict Insurance Cost", type="primary", use_container_width=True)
     else:
         st.error(f"Projected annual medical insurance expense: **${cost:,.2f}** (High Risk Bracket)")
 
-    with st.expander("View Raw Model Feature Vector"):
+    with st.expander("🔍 View Raw Model Feature Vector"):
         st.dataframe(input_data, hide_index=True)
 
 st.divider()
-st.caption("Medical Insurance Cost Prediction Model • Built with Python, Scikit-Learn, and Streamlit")
+st.caption("✨ Medical Insurance Cost Prediction Platform • Powered by Python & Streamlit 🚀")
