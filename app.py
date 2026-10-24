@@ -249,6 +249,11 @@ BMI_COLORS = {
     "Obese": "#e4572e",
 }
 
+def flat(html: str) -> str:
+    """Remove indentation and blank lines so Markdown never treats HTML as a code block."""
+    return "".join(line.strip() for line in html.splitlines())
+
+
 if not DATA_FILE.exists():
     st.error("insurance_cleaned.csv not found in the root directory.")
     st.stop()
@@ -294,7 +299,7 @@ with col2:
 status = bmi_category(bmi)
 color = BMI_COLORS[status]
 st.markdown(
-    f"""
+    flat(f"""
 <div class="bmi-chip" style="border-left: 6px solid {color};">
     <div class="left">
         <div class="bmi-dot" style="background:{color};"></div>
@@ -305,7 +310,7 @@ st.markdown(
     </div>
     <div class="num">{bmi:.1f}</div>
 </div>
-""",
+"""),
     unsafe_allow_html=True,
 )
 
@@ -343,7 +348,7 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
     diff_txt = f"{'+' if diff >= 0 else '-'}${abs(diff):,.0f}"
 
     st.markdown(
-        f"""
+        flat(f"""
 <div class="result">
     <div class="kicker">Estimated annual cost (USD)</div>
     <div class="amount">${cost:,.2f}</div>
@@ -358,7 +363,7 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
         <div class="stat"><div class="s-label">Compared with average</div><div class="s-value">{diff_txt}</div></div>
     </div>
 </div>
-""",
+"""),
         unsafe_allow_html=True,
     )
 
