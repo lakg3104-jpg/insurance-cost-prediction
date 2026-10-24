@@ -171,19 +171,6 @@ div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {font-weig
     line-height: 1.1;
     margin: 4px 0 14px 0;
 }
-.sub {color: #9cc9cc; font-size: 1.02rem; margin-bottom: 14px;}
-.meaning {
-    margin-top: 20px; padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
-    font-size: 1.05rem; line-height: 1.55; color: #e6f2f1;
-}
-.scale {display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px;}
-.scale div {
-    text-align: center; padding: 10px 4px; border-radius: 10px;
-    font-size: 0.9rem; font-weight: 600;
-    background: rgba(255, 255, 255, 0.08); color: #9cc9cc;
-}
-.scale div.on {color: #ffffff;}
 
 /* Tips */
 .tips-title {font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.2rem; margin: 4px 0 4px 0;}
