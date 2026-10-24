@@ -65,9 +65,9 @@ insurance-cost-prediction/
 ├── 04_bmi_vs_charges.png
 ├── 05_correlation_heatmap.png
 ├── 06_actual_vs_predicted.png
-├── APP_INTERFACE_1.png                  # app screenshots
-├── APP_INTERFACE_1.png
-└── APP_INTERFACE_1.png
+├── screenshot_app.png                 # app screenshots
+├── screenshot_prediction.png
+└── screenshot_breakdown.png
 ```
 
 ## Workflow
