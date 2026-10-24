@@ -171,15 +171,6 @@ div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {font-weig
     line-height: 1.1;
     margin: 4px 0 14px 0;
 }
-.tier {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #ffffff;
-}
-
 .sub {color: #9cc9cc; font-size: 1.02rem; margin-bottom: 14px;}
 .meaning {
     margin-top: 20px; padding-top: 16px;
@@ -210,7 +201,6 @@ div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {font-weig
     border-top: 1px solid rgba(255, 255, 255, 0.16);
     font-size: 1.05rem; line-height: 1.55; color: #e6f2f1;
 }
-.note {color: var(--muted); font-size: 0.85rem; margin-top: 6px;}
 
 @media (max-width: 640px) {
     .hero h1 {font-size: 2rem;}
@@ -239,7 +229,7 @@ def train_model():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     model = LinearRegression()
     model.fit(X_train, y_train)
-    return model, X.columns, y.quantile(0.50), y.quantile(0.75), y.values
+    return model, X.columns
 
 
 def bmi_category(b):
@@ -259,6 +249,7 @@ BMI_COLORS = {
     "Obese": "#e4572e",
 }
 
+
 def flat(html: str) -> str:
     """Remove indentation and blank lines so Markdown never treats HTML as a code block."""
     return "".join(line.strip() for line in html.splitlines())
@@ -268,7 +259,7 @@ if not DATA_FILE.exists():
     st.error("insurance_cleaned.csv not found in the root directory.")
     st.stop()
 
-model, columns, q50, q75, all_costs = train_model()
+model, columns = train_model()
 
 # ----------------------------------------------------------------------- Hero
 st.markdown(
@@ -276,7 +267,7 @@ st.markdown(
 <div class="hero">
     <div class="badge">🏥 Healthcare cost prediction</div>
     <h1>Medical Insurance Cost Prediction</h1>
-    <p>Enter a few personal details to get a predicted yearly health insurance cost, along with a clear breakdown of what drives it.</p>
+    <p>Enter a few personal details to get a predicted medical insurance cost, along with a clear breakdown of what drives it.</p>
 </div>
 """,
     unsafe_allow_html=True,
@@ -353,7 +344,6 @@ def estimate(**changes):
 if st.button("📊 Calculate Insurance Cost", type="primary"):
     input_data = build_input(age, sex, bmi, children, smoker, region)
     cost = estimate()
-    monthly = cost / 12
 
     # What raises the cost: compare with the same person without that factor
     raises = []
@@ -396,9 +386,8 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
     st.markdown(
         flat(f"""
 <div class="result">
-    <div class="kicker">Predicted yearly health insurance cost</div>
+    <div class="kicker">Predicted medical insurance cost</div>
     <div class="amount">${cost:,.0f}</div>
-    <div class="sub">That is about ${monthly:,.0f} per month</div>
     <div class="reason">{reason_line}</div>
 </div>
 """),
@@ -409,7 +398,7 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
 
     raises_html = "".join(
         f'<div class="tip"><div class="icon">{i}</div><div><div class="t">{t}</div><div class="d">{d}</div></div>'
-        f'<div class="amt up">+${a:,.0f} / year</div></div>'
+        f'<div class="amt up">+${a:,.0f}</div></div>'
         for i, t, d, a in raises
     )
     low_html = "".join(
