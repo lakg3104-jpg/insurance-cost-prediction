@@ -7,12 +7,13 @@ from sklearn.model_selection import train_test_split
 
 st.set_page_config(page_title="Insurance Cost Predictor", page_icon="🏥", layout="centered")
 
-DATA_FILE = Path(__file__).parent / "data" / "insurance_cleaned.csv"
+# Corrected path pointing directly to the root directory
+DATA_FILE = Path(__file__).parent / "insurance_cleaned.csv"
 
 
 @st.cache_resource
 def train_model():
-    """Train the Multiple Linear Regression model (same steps as Phase 5)."""
+    """Train the Multiple Linear Regression model."""
     df = pd.read_csv(DATA_FILE)
     X = df.drop("charges", axis=1)
     y = df["charges"]
@@ -33,7 +34,7 @@ def bmi_category(b):
 
 
 if not DATA_FILE.exists():
-    st.error("insurance_cleaned.csv not found. Expected at data/insurance_cleaned.csv.")
+    st.error("insurance_cleaned.csv not found in the root directory.")
     st.stop()
 
 model, columns, q50, q75 = train_model()
@@ -56,7 +57,6 @@ with col2:
 st.caption(f"BMI category: **{bmi_category(bmi)}**")
 
 if st.button("Predict Insurance Cost", type="primary", use_container_width=True):
-    # Same format as training: sex/smoker as 0/1, region one-hot (northeast = all 0)
     input_data = pd.DataFrame([{
         "age": age,
         "sex": 1 if sex == "male" else 0,
