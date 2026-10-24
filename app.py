@@ -13,20 +13,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional "Wow-Factor" CSS with Card Borders, Shadows, and Sleek Typography
+# Professional "Wow-Factor" CSS with Centering, Clean Card Borders, and Shadows
 st.markdown("""
     <style>
     .main {
-        background-color: #f1f5f9;
+        background-color: #f8fafc;
     }
     /* Sleek Card Container with Borders */
-    .css-card {
+    .card {
         background-color: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
         padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        margin-bottom: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+        margin-bottom: 16px;
     }
     /* Professional Button Styling */
     .stButton>button {
@@ -34,7 +34,7 @@ st.markdown("""
         color: white;
         font-weight: 600;
         font-size: 16px;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 0.75rem 1.5rem;
         border: none;
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
@@ -44,19 +44,6 @@ st.markdown("""
     .stButton>button:hover {
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35);
-    }
-    h1 {
-        color: #0f172a;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-    h3 {
-        color: #1e293b;
-        font-size: 1.2rem !important;
-        font-weight: 600;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 8px;
-        margin-bottom: 16px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -90,25 +77,34 @@ if not DATA_FILE.exists():
 
 model, columns, q50, q75 = train_model()
 
-# ---------------- Header Section ----------------
-st.title("🏥 Medical Insurance Cost Prediction")
-st.markdown("💡 *An advanced machine learning analytics platform designed to estimate healthcare expenditure securely and accurately.*")
+# ---------------- Centered Header Section ----------------
+st.markdown("""
+    <div style="text-align: center; padding-top: 10px; padding-bottom: 10px;">
+        <h1 style="color: #0f172a; font-weight: 800; font-size: 2.3rem; margin-bottom: 6px;">🏥 Medical Insurance Cost Prediction</h1>
+        <p style="color: #64748b; font-size: 1.05rem; font-weight: 400; margin-top: 0px;">
+            An advanced machine learning analytics platform designed to estimate healthcare expenditure securely and accurately.
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
 st.divider()
 
-# Input Form in a Professional Card Layout
-col1, col2 = st.columns(2, gap="large")
+# Input Form in Clean Framed Cards (No awkward headings)
+col1, col2 = st.columns(2, gap="medium")
 
 with col1:
-    st.markdown("### 👤 Patient Demographics")
-    age = st.slider("Age", min_value=18, max_value=64, value=30)
-    bmi = st.slider("BMI (Body Mass Index)", min_value=15.0, max_value=55.0, value=22.0, step=0.1)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    age = st.slider("Patient Age", min_value=18, max_value=64, value=30)
+    bmi = st.slider("Body Mass Index (BMI)", min_value=15.0, max_value=55.0, value=22.0, step=0.1)
     children = st.slider("Number of Dependents", min_value=0, max_value=5, value=0)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.markdown("### 📋 Lifestyle & Region")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     sex = st.radio("Gender", ["female", "male"], horizontal=True)
     smoker = st.radio("Smoking Status", ["no", "yes"], horizontal=True)
     region = st.selectbox("Residential Region", ["northeast", "northwest", "southeast", "southwest"])
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.info(f"🛡️ **Calculated BMI Status:** {bmi_category(bmi)}")
 st.markdown("<br>", unsafe_allow_html=True)
@@ -136,7 +132,13 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
         level = "High Cost Tier"
 
     st.divider()
-    st.subheader("📈 Prediction Analysis Report")
+    
+    # Centered Results Header
+    st.markdown("""
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h3 style="color: #0f172a; font-weight: 700;">📈 Prediction Analysis Report</h3>
+        </div>
+    """, unsafe_allow_html=True)
     
     res_col1, res_col2 = st.columns(2)
     with res_col1:
@@ -155,4 +157,8 @@ if st.button("📊 Calculate Insurance Cost", type="primary"):
         st.dataframe(input_data, hide_index=True)
 
 st.divider()
-st.caption("✨ Medical Insurance Cost Prediction Platform • Powered by Python & Streamlit 🚀")
+st.markdown("""
+    <div style="text-align: center; color: #94a3b8; font-size: 0.9rem;">
+        ✨ Medical Insurance Cost Prediction Platform • Powered by Python & Streamlit 🚀
+    </div>
+""", unsafe_allow_html=True)
